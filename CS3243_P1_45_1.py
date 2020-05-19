@@ -46,25 +46,22 @@ class Puzzle(object):
         visited.add(str(next_state))
         return next_state, (pos[0]+direction[0], pos[1]+direction[1])
 
-    def isNotSolvable(self):
+    def isSolvable(self):
         flattened_list = [i for sublist in self.init_state for i in sublist]
         inv_count = 0
         for i in range(len(flattened_list) - 1):
             for j in range(i+1, len(flattened_list)):
-                if flattened_list[i] and flattened_list[j] and flattened_list[i] < flattened_list[j]:
+                if flattened_list[i] and flattened_list[j] and flattened_list[i] > flattened_list[j]:
                     inv_count += 1
         
         if len(self.init_state[0]) % 2:
             return inv_count % 2 == 0
         else:
             x = len(self.init_state) - self.start_pos[0]
-            if x % 2:
-                return inv_count % 2 == 0
-            else:
-                return inv_count % 2
+            return inv_count % 2 == 0 if x % 2 else inv_count % 2
 
     def solve(self):
-        if self.isNotSolvable():
+        if not self.isSolvable():
             return ['UNSOLVABLE']
         move_directions = {
             (0,1): 'LEFT',
