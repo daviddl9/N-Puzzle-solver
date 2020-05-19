@@ -46,40 +46,58 @@ class Puzzle(object):
         visited.add(str(next_state))
         return next_state, (pos[0]+direction[0], pos[1]+direction[1])
 
+    def isNotSolvable(self):
+        flattened_list = [i for sublist in self.init_state for i in sublist]
+        inv_count = 0
+        for i in range(len(flattened_list) - 1):
+            for j in range(i+1, len(flattened_list)):
+                if flattened_list[i] and flattened_list[j] and flattened_list[i] < flattened_list[j]:
+                    inv_count += 1
+        
+        if len(self.init_state[0]) % 2:
+            return inv_count % 2 == 0
+        else:
+            x = len(self.init_state) - self.start_pos[0]
+            if x % 2:
+                return inv_count % 2 == 0
+            else:
+                return inv_count % 2
 
     def solve(self):
+        if self.isNotSolvable():
+            return ['UNSOLVABLE']
         move_directions = {
             (0,1): 'LEFT',
             (1,0): 'UP',
             (-1, 0): 'DOWN',
             (0, -1): 'RIGHT'
         }
-        isFound = False
+        isFound = self.init_state == self.goal_state
         visited = set()
         q = deque()
+        curr_node = None
 
         visited.add(str(self.init_state))
         q.append(self.start_node)
 
-        while q:
+        while q and not isFound:
             curr_node = q.popleft()
             curr_state, pos = curr_node.state, curr_node.pos
-            if curr_state == self.goal_state:
-                isFound = True
-                break
             
             for direction in move_directions.keys():
                 next_state, next_pos = self.move(curr_state, pos, visited, direction)
                 if next_state and next_pos:
-                    q.append(Node(next_state, curr_node, move_directions[direction], next_pos))
-        
-        if isFound:
-            while curr_node:
-                if curr_node.action:
-                    self.actions.appendleft(curr_node.action)
-                curr_node = curr_node.parent
-        else:
-            return ['UNSOLVABLE']
+                    if next_state == self.goal_state:
+                        isFound = True
+                        curr_node = Node(next_state, curr_node, move_directions[direction], next_pos)
+                        break
+                    else:
+                        q.append(Node(next_state, curr_node, move_directions[direction], next_pos))
+
+        while curr_node:
+            if curr_node.action:
+                self.actions.appendleft(curr_node.action)
+            curr_node = curr_node.parent
         
         return self.actions
 
