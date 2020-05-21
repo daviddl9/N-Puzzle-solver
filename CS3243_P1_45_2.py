@@ -9,30 +9,27 @@ import heapq
 
 # Running script on your own - given code can be run with the command:
 # python file.py, ./path/to/init_state.txt ./output/output.txt
-
 class Node(object):
     def __init__(self, curr_state, parent, action, pos):
         self.state = curr_state
         self.parent = parent
         self.action = action
         self.pos = pos
+        self.path_cost = parent.path_cost + 1 if parent != None else 0
         self.manhattanDistance = self.getManhattanDistance(curr_state)
+
+    def __lt__(self, other):
+      return self.path_cost + self.manhattanDistance < other.path_cost + other.manhattanDistance
     
     def getManhattanDistance(self, curr_state):
-      dist = 0
-      for i, arr in enumerate(curr_state):
-        for j, v in enumerate(arr):
-          dist += self.pointDistance((i, j), curr_state)
-      return dist
+      distance = 0
+      for i in range(len(self.state)):
+          for j in range(len(self.state[0])):
+              if self.state[i][j] != 0:
+                  x, y = divmod(self.state[i][j]-1, len(self.state[0]))
+                  distance += abs(x - i) + abs(y - j)
+      return distance
 
-    def pointDistance(self, point, curr_state):
-      cols = len(curr_state[0])
-      def getExpectedPoint(val):
-        expectedRow = val / cols
-        expectedCol = val % cols - 1 if val % cols == 0 else cols - 1
-        return expectedRow, expectedCol
-      expectedPt = getExpectedPoint(curr_state[point[0]][point[1]])
-      return abs(expectedPt[0] - point[0]) + abs(expectedPt[1] - point[1])
 class Puzzle(object):
     def __init__(self, init_state, goal_state):
         # you may add more attributes if you think is useful
@@ -45,8 +42,6 @@ class Puzzle(object):
                     self.start_pos = (i, j)
                     break
         self.start_node = Node(self.init_state, None, None, self.start_pos)
-  
-
 
     def swap(self, curr_state, pos, direction):
         temp = curr_state[pos[0]][pos[1]]
@@ -63,7 +58,6 @@ class Puzzle(object):
         
         next_state = copy.deepcopy(curr_state)
         curr_state = self.swap(curr_state, pos, direction)
-        visited.add(str(next_state))
         return next_state, (pos[0]+direction[0], pos[1]+direction[1])
 
     def isSolvable(self):
@@ -89,27 +83,22 @@ class Puzzle(object):
             (-1, 0): 'DOWN',
             (0, -1): 'RIGHT'
         }
-        isFound = self.init_state == self.goal_state
         visited = set()
-        q = deque()
-        curr_node = None
+        pq = []
+        heapq.heappush(pq, self.start_node)
 
-        visited.add(str(self.init_state))
-        q.append(self.start_node)
-
-        while q and not isFound:
-            curr_node = q.popleft()
-            curr_state, pos = curr_node.state, curr_node.pos
-            
+        while pq:
+            curr_node = heapq.heappop(pq)
+            if curr_node.state == self.goal_state:
+              break
+            if str(curr_node.state) in visited:
+              continue
+            visited.add(str(curr_node.state))
+           
             for direction in move_directions.keys():
-                next_state, next_pos = self.move(curr_state, pos, visited, direction)
-                if next_state and next_pos:
-                    if next_state == self.goal_state:
-                        isFound = True
-                        curr_node = Node(next_state, curr_node, move_directions[direction], next_pos)
-                        break
-                    else:
-                        q.append(Node(next_state, curr_node, move_directions[direction], next_pos))
+                next_state, next_pos = self.move(curr_node.state, curr_node.pos, visited, direction)
+                if next_state:
+                  heapq.heappush(pq, Node(next_state, curr_node, move_directions[direction], next_pos))
 
         while curr_node:
             if curr_node.action:
@@ -160,7 +149,6 @@ if __name__ == "__main__":
     for i in range(1, max_num + 1):
         goal_state[(i-1)//n][(i-1)%n] = i
     goal_state[n - 1][n - 1] = 0
-
     puzzle = Puzzle(init_state, goal_state)
     ans = puzzle.solve()
 
