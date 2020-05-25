@@ -44,11 +44,11 @@ class Node(object):
                 if (i, j) == cell: continue  # if Correct Cell
                 if i == cell[0]:  # if correct row
                     for fromCol in range(j+1,len(x)):
-                        if number > x[i][fromCol]:
+                        if number > x[i][fromCol] and self.getCorrectCellFor(x[i][fromCol], len(x))[0] == i:
                             linConflict += 1
                 elif j == cell[1]:  # if correct column
                     for fromRow in range(i+1,len(x)):
-                        if number > x[fromRow][j]:
+                        if number > x[fromRow][j] and self.getCorrectCellFor(x[fromRow][j], len(x))[1] == j:
                             linConflict += 1
 
         return 2 * linConflict
@@ -173,8 +173,9 @@ if __name__ == "__main__":
         goal_state[(i-1)//n][(i-1)%n] = i
     goal_state[n - 1][n - 1] = 0
     puzzle = Puzzle(init_state, goal_state)
+
     ans = puzzle.solve()
 
     with open(sys.argv[2], 'a') as f:
         for answer in ans:
-            f.write(answer+'\n')
+            f.write(answer + '\n')
